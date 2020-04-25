@@ -10,7 +10,7 @@ Checkers game in Python with Minimax AI
 - [x] make todo list
 
 ### Basic game
-- [ ] design data structures
+- [x] design data structures
 - [ ] draw board
 - [ ] movable pieces
 - [ ] piece hopping
