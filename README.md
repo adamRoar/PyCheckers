@@ -12,13 +12,13 @@ Checkers game in Python with Minimax AI
 ### Basic game
 - [x] design data structures
 - [ ] draw board
-- [ ] movable pieces
-- [ ] piece hopping
+- [x] movable pieces
+- [x] piece hopping
 - [ ] turns
 - [ ] win condition
 
 ### AI implementation
-- [ ] values of boards
+- [x] values of boards
 - [ ] create minimax tree structure
 - [ ] working AI opponent
 - [ ] tuning/optimization
