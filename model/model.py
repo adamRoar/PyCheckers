@@ -3,16 +3,19 @@ from enum import Enum
 from typing import List, Optional
 
 
-class Point:
+class Tile:
     def __init__(self, row: int, column: int):
         self.column = column
         self.row = row
-
 
 class Color(Enum):
     RED = 1
     BLACK = -1
 
+class MoveType(Enum):
+    JUMP = 2
+    NORMAL = 1
+    INVALID = 0
 
 class Piece:
     def __init__(self, color: Color):
@@ -26,6 +29,9 @@ class Piece:
             result = result.upper()
 
         return result
+
+    def king(self):
+        self.is_king = True
 
 
 class Board:
@@ -77,7 +83,48 @@ class Board:
                     value += piece_value
         return value
 
-    def move_piece(self, start: Point, end: Point):
-        piece_to_move = self.tiles[start.row][start.column]
-        self.tiles[end.row][end.column] = piece_to_move
-        self.tiles[start.row][start.column] = None
+    def move_piece(self, start: Tile, end: Tile) -> MoveType:
+        move_type = self.classify_move(start, end)
+        if move_type != MoveType.INVALID:
+            piece_to_move = self.get_piece_at(start)
+            self.set_piece_at(end, piece_to_move)
+            self.set_piece_at(start, None)
+        if move_type == MoveType.JUMP:
+            jumped_location = Tile((start.row + end.row) // 2, (start.column + end.column) // 2)
+            self.set_piece_at(jumped_location, None)
+        return move_type
+
+    def set_piece_at(self, position, piece):
+        self.tiles[position.row][position.column] = piece
+
+    def get_piece_at(self, position):
+        return self.tiles[position.row][position.column]
+
+    def classify_move(self, start: Tile, end: Tile) -> MoveType:
+        piece_at_start = self.get_piece_at(start)
+        if piece_at_start is None:
+            return MoveType.INVALID
+        piece_at_end = self.get_piece_at(end)
+        if piece_at_end is not None:
+            return MoveType.INVALID
+        direction = piece_at_start.color.value
+        move_type = self.check_move_type(start, end, piece_at_start, direction)
+        if piece_at_start.is_king and move_type == MoveType.INVALID:
+            move_type = self.check_move_type(start, end, piece_at_start, -direction)
+        return move_type
+
+    def check_move_type(self, start, end, piece_at_start, direction):
+        move_type = MoveType.INVALID
+        if end.row - start.row == 1 * direction:
+            if end.column - start.column == 1 * direction or end.column - start.column == -1 * direction:
+                move_type = MoveType.NORMAL
+        if end.row - start.row == 2 * direction:
+            if end.column - start.column == 2:
+                jumped_piece = self.get_piece_at(Tile(start.row + 1 * direction, start.column + 1))
+                if jumped_piece is not None and jumped_piece.color != piece_at_start.color:
+                    move_type = MoveType.JUMP
+            elif end.column - start.column == -2:
+                jumped_piece = self.get_piece_at(Tile(start.row + 1 * direction, start.column - 1))
+                if jumped_piece is not None and jumped_piece.color != piece_at_start.color:
+                    move_type = MoveType.JUMP
+        return move_type
