@@ -18,6 +18,7 @@ class MoveType(Enum):
     JUMP = 2
     NORMAL = 1
     INVALID = 0
+    WRONG_PLAYER = -1
 
 
 class Piece:
@@ -42,6 +43,7 @@ class Board:
         self.row_multiplier = 1.05
         self.king_multiplier = 2
         self.tiles = self.initialize_tiles()
+        self.turn = Color.BLACK
 
     def initialize_tiles(self) -> List[List[Optional[Piece]]]:
         tiles = [[None for i in range(8)] for i in range(8)]
@@ -95,6 +97,8 @@ class Board:
         if move_type == MoveType.JUMP:
             jumped_location = Tile((start.row + end.row) // 2, (start.column + end.column) // 2)
             self.set_piece_at(jumped_location, None)
+        if move_type == MoveType.NORMAL:
+            self.turn = Color(self.turn.value * -1)
         return move_type
 
     def set_piece_at(self, position, piece):
@@ -107,6 +111,8 @@ class Board:
         piece_at_start = self.get_piece_at(start)
         if piece_at_start is None:
             return MoveType.INVALID
+        if piece_at_start.color != self.turn:
+            return MoveType.WRONG_PLAYER
         piece_at_end = self.get_piece_at(end)
         if piece_at_end is not None:
             return MoveType.INVALID

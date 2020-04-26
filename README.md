@@ -15,6 +15,8 @@ Checkers game in Python with Minimax AI
 - [x] movable pieces
 - [x] piece hopping
 - [ ] turns
+    - [x] basic turns
+    - [ ] double jumps
 - [ ] win condition
 
 ### AI implementation
