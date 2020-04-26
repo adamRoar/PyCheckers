@@ -8,14 +8,17 @@ class Tile:
         self.column = column
         self.row = row
 
+
 class Color(Enum):
     RED = 1
     BLACK = -1
+
 
 class MoveType(Enum):
     JUMP = 2
     NORMAL = 1
     INVALID = 0
+
 
 class Piece:
     def __init__(self, color: Color):
@@ -74,12 +77,12 @@ class Board:
                 piece = self.tiles[row][col]
                 if piece is not None:
                     piece_value = piece.color.value
-                    if piece.is_king:
-                        piece_value *= self.king_multiplier
                     if piece.color == Color.RED:
                         piece_value *= pow(self.row_multiplier, row)
                     else:
                         piece_value *= pow(self.row_multiplier, 7-row)
+                    if piece.is_king:
+                        piece_value *= self.king_multiplier
                     value += piece_value
         return value
 
