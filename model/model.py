@@ -8,6 +8,20 @@ class Tile:
         self.column = column
         self.row = row
 
+    def __add__(self, other):
+        row = self.row + other.row
+        col = self.column + other.column
+        return Tile(row, col)
+
+    def __eq__(self, other):
+        return self.row == other.row and self.column == other.column
+
+    def __str__(self):
+        return "(" + str(self.row) + ", " + str(self.column) + ")"
+
+    def is_valid(self):
+        return (0 <= self.row <= 7) and (0 <= self.column <= 7)
+
 
 class Color(Enum):
     RED = 1
@@ -39,15 +53,17 @@ class Piece:
 
 
 class Board:
-    def __init__(self):
+    def __init__(self, empty=False):
         self.row_multiplier = 1.05
         self.king_multiplier = 2
-        self.tiles = self.initialize_tiles()
+        self.tiles = self.initialize_tiles(empty)
         self.turn = Color.BLACK
+        self.target_tile = None
 
-    def initialize_tiles(self) -> List[List[Optional[Piece]]]:
+    def initialize_tiles(self, empty) -> List[List[Optional[Piece]]]:
         tiles = [[None for i in range(8)] for i in range(8)]
-        self.fill_tiles(tiles)
+        if not empty:
+            self.fill_tiles(tiles)
         return tiles
 
     @staticmethod
@@ -97,9 +113,16 @@ class Board:
         if move_type == MoveType.JUMP:
             jumped_location = Tile((start.row + end.row) // 2, (start.column + end.column) // 2)
             self.set_piece_at(jumped_location, None)
+            self.target_tile = end
+            if not self.can_jump(end):
+                self.next_turn()
         if move_type == MoveType.NORMAL:
-            self.turn = Color(self.turn.value * -1)
+            self.next_turn()
         return move_type
+
+    def next_turn(self):
+        self.target_tile = None
+        self.turn = Color(self.turn.value * -1)
 
     def set_piece_at(self, position, piece):
         self.tiles[position.row][position.column] = piece
@@ -108,6 +131,8 @@ class Board:
         return self.tiles[position.row][position.column]
 
     def classify_move(self, start: Tile, end: Tile) -> MoveType:
+        if self.target_tile is not None and self.target_tile != start:
+            return MoveType.INVALID
         piece_at_start = self.get_piece_at(start)
         if piece_at_start is None:
             return MoveType.INVALID
@@ -137,3 +162,13 @@ class Board:
                 if jumped_piece is not None and jumped_piece.color != piece_at_start.color:
                     move_type = MoveType.JUMP
         return move_type
+
+    def can_jump(self, tile: Tile) -> bool:
+        jump_directions = [Tile(-2, -2), Tile(-2, 2), Tile(2, -2), Tile(2, 2)]
+        for i in jump_directions:
+            tile_to_check = tile + i
+            if tile_to_check.is_valid():
+                move_type = self.classify_move(tile, tile_to_check)
+                if move_type == MoveType.JUMP:
+                    return True
+        return False

@@ -113,6 +113,67 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(5, 0), Tile(4, 1)))
         self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
 
+    def test_can_jump(self):
+        self.b.set_piece_at(Tile(4, 3), Piece(Color.RED))
+        self.assertEqual(True, self.b.can_jump(Tile(5, 4)))
+
+    def test_tile_addition(self):
+        self.assertEqual(Tile(3, 4), Tile(1, 3) + Tile(2, 1))
+        self.assertEqual(Tile(1, 1), Tile(4, 2) + Tile(-3, -1))
+
+    def test_double_jump(self):
+        self.b.set_piece_at(Tile(4, 3), Piece(Color.RED))
+        self.b.set_piece_at(Tile(1, 0), None)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(5, 4), Tile(3, 2)))
+        self.assertEqual(self.b.turn, Color.BLACK)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(3, 2), Tile(1, 0)))
+        self.assertIsNone(self.b.target_tile)
+        self.assertEqual(self.b.turn, Color.RED)
+
+    def test_cannot_move_wrong_piece_after_jump(self):
+        self.b.set_piece_at(Tile(4, 3), Piece(Color.RED))
+        self.b.set_piece_at(Tile(1, 0), None)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(5, 4), Tile(3, 2)))
+        self.assertEqual(self.b.turn, Color.BLACK)
+        self.assertEqual(MoveType.INVALID, self.b.move_piece(Tile(5, 0), Tile(4, 1)))
+
+    def test_normal_move_after_jump_good(self):
+        self.test_double_jump()
+        self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(2, 7), Tile(3, 6)))
+
+    def test_triple_jump(self):
+        self.b = Board(True)
+        self.b.turn = Color.RED
+        self.b.set_piece_at(Tile(0, 0), Piece(Color.RED))
+        self.b.set_piece_at(Tile(1, 1), Piece(Color.BLACK))
+        self.b.set_piece_at(Tile(3, 3), Piece(Color.BLACK))
+        self.b.set_piece_at(Tile(5, 5), Piece(Color.BLACK))
+        print(self.b)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(0, 0), Tile(2, 2)))
+        print(self.b)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(2, 2), Tile(4, 4)))
+        print(self.b)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(4, 4), Tile(6, 6)))
+        print(self.b)
+        self.assertEqual(self.b.turn, Color.BLACK)
+
+    def test_king_triple_jump_backwards(self):
+        self.b = Board(True)
+        king = Piece(Color.BLACK)
+        king.king()
+        self.b.set_piece_at(Tile(0, 0), king)
+        self.b.set_piece_at(Tile(1, 1), Piece(Color.RED))
+        self.b.set_piece_at(Tile(3, 3), Piece(Color.RED))
+        self.b.set_piece_at(Tile(5, 5), Piece(Color.RED))
+        print(self.b)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(0, 0), Tile(2, 2)))
+        print(self.b)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(2, 2), Tile(4, 4)))
+        print(self.b)
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(4, 4), Tile(6, 6)))
+        print(self.b)
+        self.assertEqual(self.b.turn, Color.RED)
+
 
 if __name__ == '__main__':
     unittest.main()
