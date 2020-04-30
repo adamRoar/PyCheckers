@@ -15,11 +15,11 @@ class MyTestCase(unittest.TestCase):
     def test_normal_moves(self):
         # default turn is BLACK so we change it to RED first
         self.b.turn = Color.RED
-        # Alternating foward moves
+        # Alternating forward moves
         self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
-        self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(5, 0), Tile(4, 1)))
+        self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(5, 6), Tile(4, 7)))
         self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(2, 7), Tile(3, 6)))
-        self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(5, 6), Tile(4, 5)))
+        self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(5, 2), Tile(4, 1)))
 
         # Red moving back: INVALID
         self.assertEqual(MoveType.INVALID, self.b.move_piece(Tile(3, 2), Tile(2, 1)))
@@ -125,6 +125,8 @@ class MyTestCase(unittest.TestCase):
         self.b.set_piece_at(Tile(4, 3), Piece(Color.RED))
         self.b.set_piece_at(Tile(1, 0), None)
         self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(5, 4), Tile(3, 2)))
+        # testing that pieces other than target_tile cannot move during a double jump
+        self.assertEqual(MoveType.INVALID, self.b.move_piece(Tile(5, 0), Tile(4, 1)))
         self.assertEqual(self.b.turn, Color.BLACK)
         self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(3, 2), Tile(1, 0)))
         self.assertIsNone(self.b.target_tile)
@@ -144,6 +146,8 @@ class MyTestCase(unittest.TestCase):
     def test_triple_jump(self):
         self.b = Board(True)
         self.b.turn = Color.RED
+        self.b.red_checkers = 1
+        self.b.black_checkers = 3
         self.b.set_piece_at(Tile(0, 0), Piece(Color.RED))
         self.b.set_piece_at(Tile(1, 1), Piece(Color.BLACK))
         self.b.set_piece_at(Tile(3, 3), Piece(Color.BLACK))
@@ -161,6 +165,8 @@ class MyTestCase(unittest.TestCase):
         self.b = Board(True)
         king = Piece(Color.BLACK)
         king.king()
+        self.b.red_checkers = 3
+        self.b.black_checkers = 1
         self.b.set_piece_at(Tile(0, 0), king)
         self.b.set_piece_at(Tile(1, 1), Piece(Color.RED))
         self.b.set_piece_at(Tile(3, 3), Piece(Color.RED))
@@ -173,6 +179,34 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(4, 4), Tile(6, 6)))
         print(self.b)
         self.assertEqual(self.b.turn, Color.RED)
+
+    def test_has_jump_after_normal_with_no_jump(self):
+        self.b.turn = Color.RED
+        self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
+        self.assertFalse(self.b.must_jump)
+
+    def test_has_jump_after_normal_with_jump(self):
+        self.test_has_jump_after_normal_with_no_jump()
+        self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(5, 4), Tile(4, 3)))
+        self.assertTrue(self.b.must_jump)
+
+    def test_has_jump_after_jump(self):
+        self.test_has_jump_after_normal_with_jump()
+        self.assertEqual(MoveType.JUMP, self.b.move_piece(Tile(3, 2), Tile(5, 4)))
+        self.assertTrue(self.b.must_jump)
+
+    def test_cannot_move_piece_if_has_jump(self):
+        self.test_has_jump_after_normal_with_jump()
+        self.assertEqual(MoveType.INVALID, self.b.move_piece(Tile(2, 7), Tile(3, 6)))
+
+    def test_win_condition(self):
+        self.b = Board(True)
+        self.b.set_piece_at(Tile(4, 1), Piece(Color.RED))
+        self.b.set_piece_at(Tile(5, 2), Piece(Color.BLACK))
+        self.b.red_checkers = 1
+        self.b.black_checkers = 1
+        self.b.move_piece(Tile(5, 2), Tile(3, 0))
+        self.assertEqual(Color.BLACK, self.b.winner)
 
 
 if __name__ == '__main__':

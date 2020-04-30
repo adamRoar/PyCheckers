@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 from typing import List, Optional
+import functools
 
 
 class Tile:
@@ -20,7 +21,18 @@ class Tile:
         return "(" + str(self.row) + ", " + str(self.column) + ")"
 
     def is_valid(self):
-        return (0 <= self.row <= 7) and (0 <= self.column <= 7)
+        return Tile.is_valid_tile(self)
+
+    @staticmethod
+    def is_valid_tile(tile):
+        return (0 <= tile.row <= 7) and (0 <= tile.column <= 7)
+
+    def get_valid_diagonal_tiles(self, distance: int):
+        diagonal_tiles = [Tile(-distance, -distance),
+                          Tile(-distance, distance),
+                          Tile(distance, -distance),
+                          Tile(distance, distance)]
+        return filter(Tile.is_valid_tile, [self + tile for tile in diagonal_tiles])
 
 
 class Color(Enum):
@@ -54,16 +66,24 @@ class Piece:
 
 class Board:
     def __init__(self, empty=False):
+        self.red_checkers = None
+        self.black_checkers = None
         self.row_multiplier = 1.05
         self.king_multiplier = 2
         self.tiles = self.initialize_tiles(empty)
         self.turn = Color.BLACK
         self.target_tile = None
+        self.must_jump = None
+        self.emptied_tiles = []
+        self.end_tile = None
+        self.winner = None
 
     def initialize_tiles(self, empty) -> List[List[Optional[Piece]]]:
         tiles = [[None for i in range(8)] for i in range(8)]
         if not empty:
             self.fill_tiles(tiles)
+            self.black_checkers = 12
+            self.red_checkers = 12
         return tiles
 
     @staticmethod
@@ -112,23 +132,32 @@ class Board:
             self.set_piece_at(start, None)
         if move_type == MoveType.JUMP:
             jumped_location = Tile((start.row + end.row) // 2, (start.column + end.column) // 2)
+            jumped_piece = self.get_piece_at(jumped_location)
+            if jumped_piece.color == Color.RED:
+                self.red_checkers -= 1
+            else:
+                self.black_checkers -= 1
             self.set_piece_at(jumped_location, None)
             self.target_tile = end
             if not self.can_jump(end):
-                self.next_turn()
+                self.winner = self.check_for_win()
+                self.next_turn(end)
         if move_type == MoveType.NORMAL:
-            self.next_turn()
+            self.next_turn(end)
         return move_type
 
-    def next_turn(self):
+    def next_turn(self, end: Tile):
         self.target_tile = None
         self.turn = Color(self.turn.value * -1)
+        self.must_jump = self.has_jump(end)
 
-    def set_piece_at(self, position, piece):
-        self.tiles[position.row][position.column] = piece
+    def set_piece_at(self, tile: Tile, piece: Optional[Piece]):
+        self.tiles[tile.row][tile.column] = piece
+        if piece is None:
+            self.emptied_tiles.append(tile)
 
-    def get_piece_at(self, position):
-        return self.tiles[position.row][position.column]
+    def get_piece_at(self, tile):
+        return self.tiles[tile.row][tile.column]
 
     def classify_move(self, start: Tile, end: Tile) -> MoveType:
         if self.target_tile is not None and self.target_tile != start:
@@ -145,6 +174,8 @@ class Board:
         move_type = self.check_move_type(start, end, piece_at_start, direction)
         if piece_at_start.is_king and move_type == MoveType.INVALID:
             move_type = self.check_move_type(start, end, piece_at_start, -direction)
+        if self.must_jump and move_type is not MoveType.JUMP:
+            move_type = MoveType.INVALID
         return move_type
 
     def check_move_type(self, start, end, piece_at_start, direction):
@@ -172,3 +203,24 @@ class Board:
                 if move_type == MoveType.JUMP:
                     return True
         return False
+
+    def has_jump(self, end_tile: Tile):
+        emptied_made_jump = any([self.check_tiles_for_jump(tile, 2) for tile in self.emptied_tiles])
+        end_made_jump = self.check_tiles_for_jump(end_tile, 1)
+        self.emptied_tiles = []
+        return emptied_made_jump or end_made_jump
+
+    def check_tiles_for_jump(self, tile, distance):
+        tiles_to_check = tile.get_valid_diagonal_tiles(distance)
+        for tile in tiles_to_check:
+            if self.can_jump(tile):
+                return True
+        return False
+
+    def check_for_win(self) -> Optional[Color]:
+        if self.black_checkers == 0:
+            return Color.RED
+        elif self.red_checkers == 0:
+            return Color.BLACK
+        else:
+            return None
