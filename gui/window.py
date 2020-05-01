@@ -28,8 +28,11 @@ class PyCheckers:
             pygame.display.flip()
 
     def draw_board(self):
-        self.draw_tiles()
-        self.draw_pieces()
+        if self.board.winner is None:
+            self.draw_tiles()
+            self.draw_pieces()
+        else:
+            self.draw_win_screen()
 
     def draw_tiles(self):
         self.screen.fill(self.settings.white_tile_color)
@@ -54,6 +57,13 @@ class PyCheckers:
                         pygame.draw.rect(self.screen, self.settings.white_tile_color, (x * 100 + 40, y * 100 + 40, 20, 20))
                 x += 1
             y += 1
+
+    def draw_win_screen(self):
+        font = pygame.font.SysFont(None, 72, bold=True, italic=False)
+        color = self.settings.red_piece_color if self.board.winner == Color.RED else self.settings.black_piece_color
+        text = font.render("{winner} wins!".format(winner=self.board.winner.name), True, color)
+        self.screen.fill(self.settings.white_tile_color)
+        self.screen.blit(text, (400 - text.get_width() // 2, 400 - text.get_height() // 2))
 
     def handle_click(self):
         (x, y) = pygame.mouse.get_pos()
