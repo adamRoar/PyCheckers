@@ -208,6 +208,18 @@ class MyTestCase(unittest.TestCase):
         self.b.move_piece(Tile(5, 2), Tile(3, 0))
         self.assertEqual(Color.BLACK, self.b.winner)
 
+    def test_wrong_player(self):
+        self.assertEqual(MoveType.WRONG_PLAYER, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
+        self.assertIsNone(self.b.get_piece_at(Tile(3, 2)))
+        self.assertIsNotNone(self.b.get_piece_at(Tile(2, 1)))
+        self.assertEqual(Color.BLACK, self.b.turn)
+
+    def test_promotion(self):
+        self.b = Board(True)
+        self.b.set_piece_at(Tile(1, 0), Piece(Color.BLACK))
+        self.b.move_piece(Tile(1, 0), Tile(0, 1))
+        self.assertEqual(True, self.b.get_piece_at(Tile(0, 1)).is_king)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -19,6 +19,7 @@ Checkers game in Python with Minimax AI
     - [x] double jumps
     - [x] triple jumps
 - [x] forced jumps when available
+- [ ] promotion
 - [x] win condition
 
 ### AI implementation

@@ -1,7 +1,7 @@
 import os
+import logging
 from enum import Enum
 from typing import List, Optional
-import functools
 
 
 class Tile:
@@ -126,24 +126,26 @@ class Board:
 
     def move_piece(self, start: Tile, end: Tile) -> MoveType:
         move_type = self.classify_move(start, end)
-        if move_type != MoveType.INVALID:
+        logging.warning(str(move_type))
+        if move_type != MoveType.INVALID and move_type != MoveType.WRONG_PLAYER:
             piece_to_move = self.get_piece_at(start)
             self.set_piece_at(end, piece_to_move)
             self.set_piece_at(start, None)
-        if move_type == MoveType.JUMP:
-            jumped_location = Tile((start.row + end.row) // 2, (start.column + end.column) // 2)
-            jumped_piece = self.get_piece_at(jumped_location)
-            if jumped_piece.color == Color.RED:
-                self.red_checkers -= 1
-            else:
-                self.black_checkers -= 1
-            self.set_piece_at(jumped_location, None)
-            self.target_tile = end
-            if not self.can_jump(end):
-                self.winner = self.check_for_win()
+            self.check_for_promotion(end)
+            if move_type == MoveType.JUMP:
+                jumped_location = Tile((start.row + end.row) // 2, (start.column + end.column) // 2)
+                jumped_piece = self.get_piece_at(jumped_location)
+                if jumped_piece.color == Color.RED:
+                    self.red_checkers -= 1
+                else:
+                    self.black_checkers -= 1
+                self.set_piece_at(jumped_location, None)
+                self.target_tile = end
+                if not self.can_jump(end):
+                    self.winner = self.check_for_win()
+                    self.next_turn(end)
+            if move_type == MoveType.NORMAL:
                 self.next_turn(end)
-        if move_type == MoveType.NORMAL:
-            self.next_turn(end)
         return move_type
 
     def next_turn(self, end: Tile):
@@ -224,3 +226,7 @@ class Board:
             return Color.BLACK
         else:
             return None
+
+    def check_for_promotion(self, end):
+        if end.row == 0 or end.row == 7:
+            self.get_piece_at(end).king()
