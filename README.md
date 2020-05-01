@@ -11,7 +11,7 @@ Checkers game in Python with Minimax AI
 
 ### Basic game
 - [x] design data structures
-- [ ] draw board
+- [x] draw board
 - [x] movable pieces
 - [x] piece hopping
 - [x] turns
@@ -19,6 +19,7 @@ Checkers game in Python with Minimax AI
     - [x] double jumps
     - [x] triple jumps
 - [x] forced jumps when available
+- [x] promotion
 - [x] win condition
 
 ### AI implementation
