@@ -70,7 +70,15 @@ class PyCheckers:
         row = int((y - y % 100) / 100)
         column = int((x - x % 100) / 100)
         clicked_tile = Tile(row, column)
+        piece = self.board.get_piece_at(clicked_tile)
+
         if self.selected_tile is None:
+            if piece is None:
+                return
+            elif piece.color != self.board.turn:
+                return
+            elif self.board.must_jump and not self.board.can_jump(clicked_tile):
+                return
             self.selected_tile = clicked_tile
         else:
             move_type = self.board.move_piece(self.selected_tile, clicked_tile)
