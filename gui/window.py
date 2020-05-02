@@ -3,6 +3,7 @@ import pygame
 from pygame.event import Event
 from pygame.surface import Surface
 
+from ai.ai import Ai
 from gui.settings import Settings
 from model.model import Board, Color, Tile, MoveType
 
@@ -16,6 +17,7 @@ class PyCheckers:
         pygame.display.set_caption("PyCheckers")
         self.board = Board()
         self.selected_tile = None
+        self.ai = Ai(self.board)
 
     def run_game(self):
         while True:
@@ -86,6 +88,8 @@ class PyCheckers:
                 self.selected_tile = clicked_tile
             else:
                 self.selected_tile = None
+        if self.board.turn == Color.RED:
+            self.ai.next_move()
 
 
 if __name__ == '__main__':
