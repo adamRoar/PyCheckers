@@ -44,7 +44,6 @@ class MoveType(Enum):
     JUMP = 2
     NORMAL = 1
     INVALID = 0
-    WRONG_PLAYER = -1
 
 
 class Piece:
@@ -95,19 +94,6 @@ class Board:
                 elif row >= 5 and (col + row) % 2 == 1:
                     tiles[row][col] = Piece(Color.BLACK)
 
-    def __str__(self):
-        result = ""
-        for row in range(8):
-            for col in range(8):
-                piece = self.tiles[row][col]
-                if piece is None:
-                    result += " "
-                else:
-                    result += str(piece)
-            result += os.linesep
-        result += str(self.get_value())
-        return result
-
     def get_value(self) -> float:
         value = 0.0
         for row in range(8):
@@ -127,7 +113,7 @@ class Board:
     def move_piece(self, start: Tile, end: Tile) -> MoveType:
         move_type = self.classify_move(start, end)
         logging.warning(str(move_type))
-        if move_type != MoveType.INVALID and move_type != MoveType.WRONG_PLAYER:
+        if move_type != MoveType.INVALID:
             piece_to_move = self.get_piece_at(start)
             self.set_piece_at(end, piece_to_move)
             self.set_piece_at(start, None)
@@ -161,14 +147,15 @@ class Board:
     def get_piece_at(self, tile):
         return self.tiles[tile.row][tile.column]
 
-    def classify_move(self, start: Tile, end: Tile) -> MoveType:
+    def classify_move(self, start: Tile, end: Tile, piece_at_start=None) -> MoveType:
         if self.target_tile is not None and self.target_tile != start:
             return MoveType.INVALID
-        piece_at_start = self.get_piece_at(start)
+        if piece_at_start is None:
+            piece_at_start = self.get_piece_at(start)
         if piece_at_start is None:
             return MoveType.INVALID
         if piece_at_start.color != self.turn:
-            return MoveType.WRONG_PLAYER
+            return MoveType.INVALID
         piece_at_end = self.get_piece_at(end)
         if piece_at_end is not None:
             return MoveType.INVALID
@@ -230,3 +217,16 @@ class Board:
     def check_for_promotion(self, end):
         if end.row == 0 or end.row == 7:
             self.get_piece_at(end).king()
+
+    def __str__(self):
+        result = ""
+        for row in range(8):
+            for col in range(8):
+                piece = self.tiles[row][col]
+                if piece is None:
+                    result += " "
+                else:
+                    result += str(piece)
+            result += os.linesep
+        result += str(self.get_value())
+        return result
