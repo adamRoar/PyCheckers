@@ -9,14 +9,6 @@ class MyTestCase(unittest.TestCase):
         self.b = Board()
         self.ai = Ai(self.b, 1)
 
-    def test_equal_moves_take_leftmost(self):
-        # only works for certain with depth=1
-        self.ai.set_depth(1)
-        self.b.move_piece(Tile(5, 0), Tile(4, 1))
-        self.ai.next_move()
-        self.assertIsNone(self.b.get_piece_at(Tile(2, 1)))
-        self.assertIsNotNone(self.b.get_piece_at(Tile(3, 0)))
-
     def test_get_available_moves_with_no_jumps(self):
         self.b.turn = Color.RED
         self.assertEqual([Move([Tile(2, 1), Tile(3, 0)]),
@@ -50,6 +42,26 @@ class MyTestCase(unittest.TestCase):
                           Move([Tile(2, 3),
                                 Tile(4, 1)])],
                          moves)
+
+    def test_undo_normal_move(self):
+        move = Move([Tile(5, 2), Tile(4, 3)])
+        self.ai.do_move(move, self.b)
+        self.ai.undo_move(move, self.b)
+        self.assertIsNone(self.b.get_piece_at(Tile(4, 3)))
+        self.assertIsNotNone(self.b.get_piece_at(Tile(5, 2)))
+
+    def test_undo_jump_move(self):
+        self.test_get_available_moves_with_jump()
+        move = Move([Tile(3, 0), Tile(5, 2)])
+        self.b.move_piece(Tile(3, 0), Tile(5, 2))
+        self.ai.undo_move(move, self.b)
+        self.assertIsNone(self.b.get_piece_at(Tile(5, 2)))
+        red_piece = self.b.get_piece_at(Tile(3, 0))
+        self.assertIsNotNone(red_piece)
+        self.assertEqual(Color.RED, red_piece.color)
+        black_piece = self.b.get_piece_at(Tile(4, 1))
+        self.assertIsNotNone(black_piece)
+        self.assertEqual(Color.BLACK, black_piece.color)
 
 
 if __name__ == '__main__':
