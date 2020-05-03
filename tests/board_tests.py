@@ -1,3 +1,4 @@
+import copy
 import unittest
 from model.model import Board, Tile, MoveType, Color, Piece
 
@@ -107,7 +108,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_wrong_player_cannot_move(self):
         # Black goes first - red move here should be INVALID
-        self.assertEqual(MoveType.WRONG_PLAYER, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
+        self.assertEqual(MoveType.INVALID, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
 
     def test_turns_alternate(self):
         self.assertEqual(MoveType.NORMAL, self.b.move_piece(Tile(5, 0), Tile(4, 1)))
@@ -209,7 +210,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(Color.BLACK, self.b.winner)
 
     def test_wrong_player(self):
-        self.assertEqual(MoveType.WRONG_PLAYER, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
+        self.assertEqual(MoveType.INVALID, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
         self.assertIsNone(self.b.get_piece_at(Tile(3, 2)))
         self.assertIsNotNone(self.b.get_piece_at(Tile(2, 1)))
         self.assertEqual(Color.BLACK, self.b.turn)
@@ -219,6 +220,14 @@ class MyTestCase(unittest.TestCase):
         self.b.set_piece_at(Tile(1, 0), Piece(Color.BLACK))
         self.b.move_piece(Tile(1, 0), Tile(0, 1))
         self.assertEqual(True, self.b.get_piece_at(Tile(0, 1)).is_king)
+
+    def test_deep_copy_board(self):
+        nb = copy.deepcopy(self.b)
+        piece = self.b.get_piece_at(Tile(2, 1))
+        piece.king()
+        self.assertEqual(False, nb.get_piece_at(Tile(2, 1)).is_king)
+        self.b.move_piece(Tile(2, 1), Tile(3, 0))
+        self.assertEqual(None, nb.get_piece_at(Tile(3, 0)))
 
 
 if __name__ == '__main__':
