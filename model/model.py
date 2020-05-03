@@ -14,6 +14,9 @@ class Tile:
         col = self.column + other.column
         return Tile(row, col)
 
+    def midpoint(self, other):
+        return Tile((self.row + other.row) // 2, (self.column + other.column) // 2)
+
     def __eq__(self, other):
         return self.row == other.row and self.column == other.column
 
@@ -33,6 +36,13 @@ class Tile:
                           Tile(distance, -distance),
                           Tile(distance, distance)]
         return filter(Tile.is_valid_tile, [self + tile for tile in diagonal_tiles])
+
+    def distance_from(self, other):
+        row_dif = abs(other.row - self.row)
+        col_dif = abs(other.column - self.column)
+        if row_dif != col_dif:
+            raise Exception("Invalid tile distance (not diagonal)")
+        return row_dif
 
 
 class Color(Enum):
@@ -119,7 +129,7 @@ class Board:
             self.set_piece_at(start, None)
             self.check_for_promotion(end)
             if move_type == MoveType.JUMP:
-                jumped_location = Tile((start.row + end.row) // 2, (start.column + end.column) // 2)
+                jumped_location = start.midpoint(end)
                 jumped_piece = self.get_piece_at(jumped_location)
                 if jumped_piece.color == Color.RED:
                     self.red_checkers -= 1
