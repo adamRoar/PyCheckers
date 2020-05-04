@@ -110,8 +110,8 @@ class Board:
             for col in range(8):
                 piece = self.tiles[row][col]
                 if piece is not None:
-                    piece_value = piece.color.value
-                    if piece.color == Color.RED:
+                    piece_value = piece.color.value * self.turn.value
+                    if piece.color == self.turn:
                         piece_value *= pow(self.row_multiplier, row)
                     else:
                         piece_value *= pow(self.row_multiplier, 7-row)
@@ -122,7 +122,7 @@ class Board:
 
     def move_piece(self, start: Tile, end: Tile) -> (MoveType, Optional[Piece]):
         move_type = self.classify_move(start, end)
-        logging.warning(str(move_type))
+        # logging.warning(str(move_type))
         if move_type != MoveType.INVALID:
             piece_to_move = self.get_piece_at(start)
             self.set_piece_at(end, piece_to_move)
