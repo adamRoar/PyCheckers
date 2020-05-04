@@ -66,15 +66,19 @@ class Ai:
         start, *rest = move.path
         jumped_pieces = []
         for tile in rest:
-            _, jumped_piece = board.move_piece(start, tile)
+            move_type, jumped_piece = board.move_piece(start, tile)
+            if move_type == MoveType.INVALID:
+                raise Exception("Invalid move type")
             if jumped_piece is not None:
                 jumped_pieces.append(jumped_piece)
             start = tile
         return jumped_pieces
 
-    def undo_move(self, move: Move, jumped_pieces: List[Piece], board):
+    def undo_move(self, move: Move, jumped_pieces: List[Piece], must_jump: bool, board):
         inverse_move = move.inverse()
         self.undo_path(inverse_move.path, jumped_pieces, board)
+        board.switch_turn_color()
+        board.must_jump = must_jump
 
     def undo_path(self, path, jumped_pieces, board):
         start, *tail = path
@@ -82,10 +86,19 @@ class Ai:
         piece = board.get_piece_at(start)
         if piece is None:
             raise Exception("Cannot undo a move with no piece at the end")
+        if start.row == 0 or start.row == 7:
+            piece.unking()
         board.set_piece_at(end, piece)
         board.set_piece_at(start, None)
         if start.distance_from(end) == 2:
-            board.set_piece_at(start.midpoint(end), jumped_pieces.pop())
+            if not jumped_pieces:
+                raise Exception("Attempting to undo a jump with no jumped pieces")
+            jumped_piece = jumped_pieces.pop()
+            board.set_piece_at(start.midpoint(end), jumped_piece)
+            if jumped_piece.color == Color.RED:
+                board.red_checkers += 1
+            else:
+                board.black_checkers += 1
         if len(tail) >= 2:
             self.undo_path(tail, jumped_pieces, board)
 
@@ -110,7 +123,7 @@ class Ai:
                 piece = board.get_piece_at(start)
                 move = Move([start, end]) if first_move is None else first_move
                 board.set_piece_at(start, None)
-                board.set_piece_at(end, Piece(Color.RED))
+                board.set_piece_at(end, piece)
                 extra_jumps = self.get_moves(end, board, only_jumps=True, first_move=move)
                 board.set_piece_at(start, piece)
                 board.set_piece_at(end, None)
@@ -121,29 +134,43 @@ class Ai:
         return moves
 
     def get_best_move(self) -> Optional[Move]:
-        root_node = MoveNode(None, None, self.board)
-        self.build_tree(root_node, self.board, 1)
-        return self.evaluate_tree(root_node)
+        _, move = self.evaluate_tree(None, self.board, 1)
+        return move
 
-    def build_tree(self, root_node, board, depth):
-        if depth > self.depth:
-            return
+    def evaluate_tree(self, parent_move, board, depth) -> (float, Move):
         moves = self.get_available_moves(board)
-        if not moves:
-            return None
+        if not moves or depth > self.depth:
+            return board.get_value(), parent_move
+        children = []
         for move in moves:
-            copy_board = copy.deepcopy(board)
-            self.do_move(move, copy_board)
-            node = MoveNode(move, root_node, copy_board)
-            root_node.children.append(node)
-            self.build_tree(node, copy_board, depth + 1)
+            must_jump = board.must_jump
+            jumped_pieces = self.do_move(move, board)
+            child = self.evaluate_tree(move, board, depth + 1)
+            children.append(child)
+            self.undo_move(move, jumped_pieces, must_jump, board)
+        if board.turn == Color.RED:
+            max_value, child_move = max(children, key=self.get_value_from_child)
+            if parent_move is not None:
+                return max_value, parent_move
+            else:
+                return max_value, child_move
+        else:
+            min_value, child_move = min(children, key=self.get_value_from_child)
+            if parent_move is not None:
+                return min_value, parent_move
+            else:
+                return min_value, child_move
 
-    def evaluate_tree(self, root_node) -> Move:
-        best_move = None
-        best_value = float("-inf")
-        for child in root_node.children:
-            value = child.get_node_value()
-            if value > best_value:
-                best_value = value
-                best_move = child.move
-        return best_move
+    def get_value_from_child(self, child):
+        value, _ = child
+        return value
+
+    # def evaluate_tree(self, root_node) -> Move:
+    #     best_move = None
+    #     best_value = float("-inf")
+    #     for child in root_node.children:
+    #         value = child.get_node_value()
+    #         if value > best_value:
+    #             best_value = value
+    #             best_move = child.move
+    #     return best_move
