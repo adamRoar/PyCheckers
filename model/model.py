@@ -72,6 +72,9 @@ class Piece:
     def king(self):
         self.is_king = True
 
+    def unking(self):
+        self.is_king = False
+
 
 class Board:
     def __init__(self, empty=False):
@@ -122,7 +125,8 @@ class Board:
 
     def move_piece(self, start: Tile, end: Tile) -> (MoveType, Optional[Piece]):
         move_type = self.classify_move(start, end)
-        # logging.warning(str(move_type))
+        logging.warning(str(move_type))
+        jumped_piece = None
         if move_type != MoveType.INVALID:
             piece_to_move = self.get_piece_at(start)
             self.set_piece_at(end, piece_to_move)
@@ -140,14 +144,13 @@ class Board:
                 if not self.can_jump(end):
                     self.winner = self.check_for_win()
                     self.next_turn(end)
-                    return move_type, jumped_piece
             if move_type == MoveType.NORMAL:
                 self.next_turn(end)
-        return move_type, None
+        return move_type, jumped_piece
 
     def next_turn(self, end: Tile):
         self.target_tile = None
-        self.turn = Color(self.turn.value * -1)
+        self.switch_turn_color()
         self.must_jump = self.has_jump(end)
 
     def set_piece_at(self, tile: Tile, piece: Optional[Piece]):
@@ -229,13 +232,16 @@ class Board:
         if end.row == 0 or end.row == 7:
             self.get_piece_at(end).king()
 
+    def switch_turn_color(self):
+        self.turn = Color(self.turn.value * -1)
+
     def __str__(self):
         result = ""
         for row in range(8):
             for col in range(8):
                 piece = self.tiles[row][col]
                 if piece is None:
-                    result += " "
+                    result += "-"
                 else:
                     result += str(piece)
             result += os.linesep
