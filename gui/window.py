@@ -17,7 +17,7 @@ class PyCheckers:
         pygame.display.set_caption("PyCheckers")
         self.board = Board()
         self.selected_tile = None
-        self.ai = Ai(self.board)
+        self.ai = Ai(self.board, 7)
 
     def run_game(self):
         while True:

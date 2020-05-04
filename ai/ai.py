@@ -1,3 +1,4 @@
+import copy
 import os
 import random
 import string
@@ -25,9 +26,22 @@ class Move:
 
 
 class MoveNode:
-    def __init__(self, move: Move, parent):
+    def __init__(self, move: Optional[Move], parent, board):
         self.move = move
         self.parent = parent  # type: MoveNode
+        self.children = []  # type: List[MoveNode]
+        self.jumped_pieces = []
+        self.value = 0.0
+        self.board = board
+
+    def get_node_value(self) -> float:
+        if not self.children:
+            return self.board.get_value()
+        else:
+            if self.board.turn == Color.RED:
+                return max([child.get_node_value() for child in self.children])
+            else:
+                return min([child.get_node_value() for child in self.children])
 
 
 class Ai:
@@ -36,8 +50,7 @@ class Ai:
         self.depth = depth
 
     def next_move(self):
-        moves = self.get_available_moves(self.board)
-        move = self.get_best_move(moves)
+        move = self.get_best_move()
         if move is not None:
             self.do_move(move, self.board)
 
@@ -94,7 +107,7 @@ class Ai:
             if move_type == MoveType.NORMAL:
                 moves.append(Move([start, end]))
             if move_type == MoveType.JUMP:
-                piece =  board.get_piece_at(start)
+                piece = board.get_piece_at(start)
                 move = Move([start, end]) if first_move is None else first_move
                 board.set_piece_at(start, None)
                 board.set_piece_at(end, Piece(Color.RED))
@@ -107,8 +120,30 @@ class Ai:
                     moves.append(Move([start, end]))
         return moves
 
-    def get_best_move(self, moves: List[Move]) -> Optional[Move]:
-        if moves:
-            index = random.randint(0, len(moves) - 1)
-            return moves[index]
-        return None
+    def get_best_move(self) -> Optional[Move]:
+        root_node = MoveNode(None, None, self.board)
+        self.build_tree(root_node, self.board, 1)
+        return self.evaluate_tree(root_node)
+
+    def build_tree(self, root_node, board, depth):
+        if depth > self.depth:
+            return
+        moves = self.get_available_moves(board)
+        if not moves:
+            return None
+        for move in moves:
+            copy_board = copy.deepcopy(board)
+            self.do_move(move, copy_board)
+            node = MoveNode(move, root_node, copy_board)
+            root_node.children.append(node)
+            self.build_tree(node, copy_board, depth + 1)
+
+    def evaluate_tree(self, root_node) -> Move:
+        best_move = None
+        best_value = float("-inf")
+        for child in root_node.children:
+            value = child.get_node_value()
+            if value > best_value:
+                best_value = value
+                best_move = child.move
+        return best_move
