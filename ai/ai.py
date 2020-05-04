@@ -21,9 +21,7 @@ class Move:
         return "[" + tile_str + "]"
 
     def inverse(self):
-        reverse_move = self.path.copy()
-        reverse_move.reverse()
-        return Move(reverse_move)
+        return Move(self.path[::-1])
 
 
 class MoveNode:
@@ -51,23 +49,32 @@ class Ai:
                     moves += self.get_moves(Tile(row, col), board)
         return moves
 
-    def do_move(self, move: Move, board):
+    def do_move(self, move: Move, board) -> List[Piece]:
         start, *rest = move.path
+        jumped_pieces = []
         for tile in rest:
-            board.move_piece(start, tile)
+            _, jumped_piece = board.move_piece(start, tile)
+            if jumped_piece is not None:
+                jumped_pieces.append(jumped_piece)
             start = tile
+        return jumped_pieces
 
-    def undo_move(self, move: Move, board):
+    def undo_move(self, move: Move, jumped_pieces: List[Piece], board):
         inverse_move = move.inverse()
-        start = inverse_move.path[0]
-        end = inverse_move.path[-1]
+        self.undo_path(inverse_move.path, jumped_pieces, board)
+
+    def undo_path(self, path, jumped_pieces, board):
+        start, *tail = path
+        end = tail[0]
         piece = board.get_piece_at(start)
         if piece is None:
             raise Exception("Cannot undo a move with no piece at the end")
         board.set_piece_at(end, piece)
         board.set_piece_at(start, None)
         if start.distance_from(end) == 2:
-            board.set_piece_at(start.midpoint(end), Piece(Color(piece.color.value * -1)))
+            board.set_piece_at(start.midpoint(end), jumped_pieces.pop())
+        if len(tail) >= 2:
+            self.undo_path(tail, jumped_pieces, board)
 
     def set_depth(self, depth):
         self.depth = depth
