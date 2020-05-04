@@ -120,7 +120,7 @@ class Board:
                     value += piece_value
         return value
 
-    def move_piece(self, start: Tile, end: Tile) -> MoveType:
+    def move_piece(self, start: Tile, end: Tile) -> (MoveType, Optional[Piece]):
         move_type = self.classify_move(start, end)
         logging.warning(str(move_type))
         if move_type != MoveType.INVALID:
@@ -140,9 +140,10 @@ class Board:
                 if not self.can_jump(end):
                     self.winner = self.check_for_win()
                     self.next_turn(end)
+                    return move_type, jumped_piece
             if move_type == MoveType.NORMAL:
                 self.next_turn(end)
-        return move_type
+        return move_type, None
 
     def next_turn(self, end: Tile):
         self.target_tile = None
