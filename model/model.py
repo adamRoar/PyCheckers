@@ -44,6 +44,9 @@ class Tile:
             raise Exception("Invalid tile distance (not diagonal)")
         return row_dif
 
+    def is_end_row(self):
+        return self.row == 0 or self.row == 7
+
 
 class Color(Enum):
     RED = 1
@@ -88,7 +91,6 @@ class Board:
         self.must_jump = None
         self.emptied_tiles = []
         self.end_tile = None
-        self.winner = None
 
     def initialize_tiles(self, empty) -> List[List[Optional[Piece]]]:
         tiles = [[None for i in range(8)] for i in range(8)]
@@ -113,7 +115,7 @@ class Board:
             for col in range(8):
                 piece = self.tiles[row][col]
                 if piece is not None:
-                    piece_value = piece.color.value * self.turn.value
+                    piece_value = piece.color.value
                     if piece.color == self.turn:
                         piece_value *= pow(self.row_multiplier, row)
                     else:
@@ -125,7 +127,6 @@ class Board:
 
     def move_piece(self, start: Tile, end: Tile) -> (MoveType, Optional[Piece]):
         move_type = self.classify_move(start, end)
-        logging.warning(str(move_type))
         jumped_piece = None
         if move_type != MoveType.INVALID:
             piece_to_move = self.get_piece_at(start)
@@ -142,7 +143,6 @@ class Board:
                 self.set_piece_at(jumped_location, None)
                 self.target_tile = end
                 if not self.can_jump(end):
-                    self.winner = self.check_for_win()
                     self.next_turn(end)
             if move_type == MoveType.NORMAL:
                 self.next_turn(end)
@@ -198,11 +198,10 @@ class Board:
         return move_type
 
     def can_jump(self, tile: Tile) -> bool:
-        jump_directions = [Tile(-2, -2), Tile(-2, 2), Tile(2, -2), Tile(2, 2)]
-        for i in jump_directions:
-            tile_to_check = tile + i
-            if tile_to_check.is_valid():
-                move_type = self.classify_move(tile, tile_to_check)
+        tiles_to_check = tile.get_valid_diagonal_tiles(2)
+        for end in tiles_to_check:
+            if end.is_valid():
+                move_type = self.classify_move(tile, end)
                 if move_type == MoveType.JUMP:
                     return True
         return False
@@ -220,7 +219,7 @@ class Board:
                 return True
         return False
 
-    def check_for_win(self) -> Optional[Color]:
+    def winner(self) -> Optional[Color]:
         if self.black_checkers == 0:
             return Color.RED
         elif self.red_checkers == 0:
@@ -229,7 +228,7 @@ class Board:
             return None
 
     def check_for_promotion(self, end):
-        if end.row == 0 or end.row == 7:
+        if end.is_end_row():
             self.get_piece_at(end).king()
 
     def switch_turn_color(self):

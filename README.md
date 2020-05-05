@@ -24,6 +24,6 @@ Checkers game in Python with Minimax AI
 
 ### AI implementation
 - [x] values of boards
-- [ ] create minimax tree structure
-- [ ] working AI opponent
+- [x] create minimax tree structure
+- [x] working AI opponent
 - [ ] tuning/optimization
