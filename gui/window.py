@@ -17,7 +17,7 @@ class PyCheckers:
         pygame.display.set_caption("PyCheckers")
         self.board = Board()
         self.selected_tile = None
-        self.ai = Ai(self.board, 3)
+        self.ai = Ai(self.board, 4)
 
     def run_game(self):
         while True:
@@ -30,7 +30,7 @@ class PyCheckers:
             pygame.display.flip()
 
     def draw_board(self):
-        if self.board.winner is None:
+        if self.board.winner() is None:
             self.draw_tiles()
             self.draw_pieces()
         else:
@@ -62,8 +62,8 @@ class PyCheckers:
 
     def draw_win_screen(self):
         font = pygame.font.SysFont(None, 72, bold=True, italic=False)
-        color = self.settings.red_piece_color if self.board.winner == Color.RED else self.settings.black_piece_color
-        text = font.render("{winner} wins!".format(winner=self.board.winner.name), True, color)
+        color = self.settings.red_piece_color if self.board.winner() == Color.RED else self.settings.black_piece_color
+        text = font.render("{winner} wins!".format(winner=self.board.winner().name), True, color)
         self.screen.fill(self.settings.white_tile_color)
         self.screen.blit(text, (400 - text.get_width() // 2, 400 - text.get_height() // 2))
 

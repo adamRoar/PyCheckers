@@ -46,8 +46,8 @@ class MyTestCase(unittest.TestCase):
     def test_undo_normal_move(self):
         move = Move([Tile(5, 2), Tile(4, 3)])
         must_jump = self.b.must_jump
-        self.ai.do_move(move, self.b)
-        self.ai.undo_move(move, [], must_jump, self.b)
+        jumped_pieces, was_king = self.ai.do_move(move, self.b)
+        self.ai.undo_move(move, jumped_pieces, must_jump, was_king, self.b)
         self.assertIsNone(self.b.get_piece_at(Tile(4, 3)))
         self.assertIsNotNone(self.b.get_piece_at(Tile(5, 2)))
 
@@ -55,9 +55,9 @@ class MyTestCase(unittest.TestCase):
         self.test_get_available_moves_with_jump()
         move = Move([Tile(3, 0), Tile(5, 2)])
         must_jump = self.b.must_jump
-        jumped_pieces = self.ai.do_move(move, self.b)
+        jumped_pieces, was_king = self.ai.do_move(move, self.b)
         jumped_piece = jumped_pieces[0]
-        self.ai.undo_move(move, jumped_pieces, must_jump, self.b)
+        self.ai.undo_move(move, jumped_pieces, must_jump, was_king, self.b)
         self.assertIsNone(self.b.get_piece_at(Tile(5, 2)))
         red_piece = self.b.get_piece_at(Tile(3, 0))
         self.assertIsNotNone(red_piece)
@@ -73,8 +73,8 @@ class MyTestCase(unittest.TestCase):
         self.b.set_piece_at(Tile(1, 0), None)
         move = Move([Tile(5, 4), Tile(3, 2), Tile(1, 0)])
         must_jump = self.b.must_jump
-        jumped_pieces = self.ai.do_move(move, self.b)
-        self.ai.undo_move(move, jumped_pieces, must_jump, self.b)
+        jumped_pieces, was_king = self.ai.do_move(move, self.b)
+        self.ai.undo_move(move, jumped_pieces, must_jump, was_king, self.b)
         self.assertEqual(Color.RED, self.b.get_piece_at(Tile(2, 1)).color)
         # piece was added to array of jumped pieces by do_move and readded to the board by undo_move
         self.assertEqual(piece, self.b.get_piece_at(Tile(4, 3)))
