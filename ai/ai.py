@@ -26,9 +26,10 @@ class Move:
 
 
 class Ai:
-    def __init__(self, board: Board, depth: int = 10):
+    def __init__(self, board: Board,  color: Color, depth: int = 4):
         self.board = board
         self.depth = depth
+        self.color = color
 
     def next_move(self):
         move = self.get_best_move()

@@ -84,7 +84,8 @@ class Board:
         self.red_checkers = None
         self.black_checkers = None
         self.row_multiplier = 1.05
-        self.king_multiplier = 2
+        self.end_multiplier = 1.02
+        self.king_value = 2
         self.tiles = self.initialize_tiles(empty)
         self.turn = Color.BLACK
         self.target_tile = None
@@ -116,12 +117,20 @@ class Board:
                 piece = self.tiles[row][col]
                 if piece is not None:
                     piece_value = piece.color.value
-                    if piece.color == self.turn:
-                        piece_value *= pow(self.row_multiplier, row)
+                    if self.black_checkers < 6 or self.red_checkers < 6:
+                        if piece.is_king:
+                            piece_value = self.king_value * piece.color.value
+                        if piece.color == Color.BLACK:
+                            piece_value *= pow(self.end_multiplier, row)
+                        else:
+                            piece_value *= pow(self.end_multiplier, 7 - row)
                     else:
-                        piece_value *= pow(self.row_multiplier, 7-row)
-                    if piece.is_king:
-                        piece_value *= self.king_multiplier
+                        if piece.color == Color.RED:
+                            piece_value *= pow(self.row_multiplier, row)
+                        else:
+                            piece_value *= pow(self.row_multiplier, 7-row)
+                        if piece.is_king:
+                            piece_value = self.king_value * piece.color.value
                     value += piece_value
         return value
 
