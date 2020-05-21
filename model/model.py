@@ -121,9 +121,9 @@ class Board:
                 piece = self.tiles[row][col]
                 if piece is not None:
                     piece_value = piece.color.value
-                    if self.black_checkers is not None and self.red_checkers is not None and (self.black_checkers < 6 or self.red_checkers < 6):
+                    if self.black_checkers is not None and self.red_checkers is not None and (self.black_checkers < 4 or self.red_checkers < 4):
                         if piece.is_king:
-                            piece_value = self.king_value * piece.color.value
+                            piece_value *= self.king_value
                         if piece.color == Color.BLACK:
                             piece_value *= pow(self.end_multiplier, 4 - abs(4-row))
                         else:
@@ -134,7 +134,7 @@ class Board:
                         else:
                             piece_value *= pow(self.row_multiplier, 7-row)
                         if piece.is_king:
-                            piece_value = self.king_value * piece.color.value
+                            piece_value *= self.king_value
                     value += piece_value
         return value
 
