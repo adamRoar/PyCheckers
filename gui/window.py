@@ -20,7 +20,7 @@ class PyCheckers:
         self.red_ai = Ai(self.board, Color.RED, 4)
         self.black_ai = Ai(self.board, Color.BLACK, 4)
         self.first = True
-        self.two_AIs = True
+        self.num_AIs = 0
 
     def run_game(self):
         while True:
@@ -28,12 +28,16 @@ class PyCheckers:
                 if event.type == pygame.QUIT:
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if not self.two_AIs:
+                    if self.num_AIs != 2:
                         self.handle_click()
-                if event == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        self.two_AIs = not self.two_AIs
-            if self.two_AIs:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_0:
+                        self.num_AIs = 2
+                    elif event.key == pygame.K_1:
+                        self.num_AIs = 1
+                    elif event.key == pygame.K_2:
+                        self.num_AIs = 0
+            if self.num_AIs == 2:
                 self.black_ai.next_move()
                 self.draw_board()
                 pygame.display.flip()
@@ -45,6 +49,7 @@ class PyCheckers:
         if self.board.winner() is None:
             self.draw_tiles()
             self.draw_pieces()
+            self.draw_text()
         else:
             self.draw_win_screen()
 
@@ -71,6 +76,15 @@ class PyCheckers:
                         pygame.draw.rect(self.screen, self.settings.white_tile_color, (x * 100 + 40, y * 100 + 40, 20, 20))
                 x += 1
             y += 1
+
+    def draw_text(self):
+        font = pygame.font.SysFont(None, 20, bold=True, italic=False)
+        small_font = pygame.font.SysFont(None, 14, bold=True, italic=False)
+        color = self.settings.text_color
+        player_text = font.render("{num_players} player".format(num_players=(2 - self.num_AIs)), True, color)
+        instruction_text = small_font.render("0, 1, or 2 to change", True, color)
+        self.screen.blit(player_text, (5, 10))
+        self.screen.blit(instruction_text, (5, 30))
 
     def draw_win_screen(self):
         if self.first:
@@ -103,7 +117,9 @@ class PyCheckers:
                 self.selected_tile = clicked_tile
             else:
                 self.selected_tile = None
-        if self.board.turn == Color.RED:
+        if self.board.turn == Color.RED and self.num_AIs == 1:
+            self.draw_board()
+            pygame.display.flip()
             self.red_ai.next_move()
 
 
