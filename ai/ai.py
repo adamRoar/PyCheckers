@@ -30,11 +30,13 @@ class Ai:
         self.board = board
         self.depth = depth
         self.color = color
+        self.last_move = None
 
     def next_move(self):
         move = self.get_best_move()
         if move is not None:
             self.do_move(move, self.board)
+            self.last_move = move
 
     def get_available_moves(self, board) -> List[Move]:
         moves = []
@@ -144,6 +146,11 @@ class Ai:
             return board.get_value(), parent_move
         children = []
         for move in moves:
+            if self.last_move is not None and move == self.last_move.inverse():
+                if len(moves) > 1:
+                    continue
+                else:
+                    return 0, move
             must_jump = board.must_jump
             jumped_pieces, was_king = self.do_move(move, board)
             child = self.evaluate_tree(move, board, depth + 1)
