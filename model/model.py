@@ -84,7 +84,7 @@ class Board:
         self.red_checkers = None
         self.black_checkers = None
         self.row_multiplier = 1.05
-        self.end_multiplier = 1.02
+        self.end_multiplier = 1.3
         self.king_value = 2
         self.tiles = self.initialize_tiles(empty)
         self.turn = Color.BLACK
@@ -112,18 +112,22 @@ class Board:
 
     def get_value(self) -> float:
         value = 0.0
+        if self.black_checkers == 0:
+            return 99999
+        if self.red_checkers == 0:
+            return -99999
         for row in range(8):
             for col in range(8):
                 piece = self.tiles[row][col]
                 if piece is not None:
                     piece_value = piece.color.value
-                    if self.black_checkers < 6 or self.red_checkers < 6:
+                    if self.black_checkers is not None and self.red_checkers is not None and (self.black_checkers < 6 or self.red_checkers < 6):
                         if piece.is_king:
                             piece_value = self.king_value * piece.color.value
                         if piece.color == Color.BLACK:
-                            piece_value *= pow(self.end_multiplier, row)
+                            piece_value *= pow(self.end_multiplier, 4 - abs(4-row))
                         else:
-                            piece_value *= pow(self.end_multiplier, 7 - row)
+                            piece_value *= pow(self.end_multiplier, 4 - abs(3-row))
                     else:
                         if piece.color == Color.RED:
                             piece_value *= pow(self.row_multiplier, row)
@@ -255,3 +259,10 @@ class Board:
             result += os.linesep
         result += str(self.get_value())
         return result
+
+    def __eq__(self, other):
+        for row in range(8):
+            for col in range(8):
+                if self.tiles[row][col] != other.tiles[row][col]:
+                    return False
+        return True

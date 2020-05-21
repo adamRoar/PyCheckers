@@ -20,6 +20,7 @@ class PyCheckers:
         self.red_ai = Ai(self.board, Color.RED, 4)
         self.black_ai = Ai(self.board, Color.BLACK, 4)
         self.first = True
+        self.two_AIs = True
 
     def run_game(self):
         while True:
@@ -27,13 +28,18 @@ class PyCheckers:
                 if event.type == pygame.QUIT:
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.handle_click()
-            # self.black_ai.next_move()
+                    if not self.two_AIs:
+                        self.handle_click()
+                if event == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.two_AIs = not self.two_AIs
+            if self.two_AIs:
+                self.black_ai.next_move()
+                self.draw_board()
+                pygame.display.flip()
+                self.red_ai.next_move()
             self.draw_board()
             pygame.display.flip()
-            # self.red_ai.next_move()
-            # self.draw_board()
-            # pygame.display.flip()
 
     def draw_board(self):
         if self.board.winner() is None:

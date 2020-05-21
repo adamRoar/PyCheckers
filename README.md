@@ -26,4 +26,9 @@ Checkers game in Python with Minimax AI
 - [x] values of boards
 - [x] create minimax tree structure
 - [x] working AI opponent
-- [ ] tuning/optimization
+
+### Optimizations
+- [ ] fix weird endgame behavior
+- [ ] alpha-beta pruning
+- [ ] multi-threading
+- [ ] neural network

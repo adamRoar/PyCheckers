@@ -207,7 +207,7 @@ class MyTestCase(unittest.TestCase):
         self.b.red_checkers = 1
         self.b.black_checkers = 1
         self.b.move_piece(Tile(5, 2), Tile(3, 0))
-        self.assertEqual(Color.BLACK, self.b.winner)
+        self.assertEqual(Color.BLACK, self.b.winner())
 
     def test_wrong_player(self):
         self.assertMoveType(MoveType.INVALID, self.b.move_piece(Tile(2, 1), Tile(3, 2)))
