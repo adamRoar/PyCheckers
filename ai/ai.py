@@ -2,6 +2,9 @@ import copy
 import os
 import random
 import string
+import threading
+from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List, Optional
 
 from model.model import Board, Tile, Piece, MoveType, Color
@@ -137,25 +140,18 @@ class Ai:
         return moves
 
     def get_best_move(self) -> Optional[Move]:
-        _, move = self.evaluate_tree(None, self.board, 1)
+        with ProcessPoolExecutor(max_workers=12) as executor:
+            _, move = self.evaluate_tree(None, self.board, 1, executor)
         return move
 
-    def evaluate_tree(self, parent_move, board, depth) -> (float, Move):
+    def evaluate_tree(self, parent_move, board, depth, thread_pool: ThreadPoolExecutor) -> (float, Move):
         moves = self.get_available_moves(board)
         if not moves or depth > self.depth:
             return board.get_value(), parent_move
-        children = []
-        for move in moves:
-            if self.last_move is not None and move == self.last_move.inverse():
-                if len(moves) > 1:
-                    continue
-                else:
-                    return 0, move
-            must_jump = board.must_jump
-            jumped_pieces, was_king = self.do_move(move, board)
-            child = self.evaluate_tree(move, board, depth + 1)
-            children.append(child)
-            self.undo_move(move, jumped_pieces, must_jump, was_king, board)
+        if len(moves) == 1 and depth == 1:
+            return 0, moves[0]
+        children = map(self.evaluate_move, [(move, board, depth, thread_pool) for move in moves])
+        children = filter(lambda item: item is not None, children)
         if board.turn == Color.RED:
             max_value, child_move = max(children, key=self.get_value_from_child)
             if parent_move is not None:
@@ -168,6 +164,16 @@ class Ai:
                 return min_value, parent_move
             else:
                 return min_value, child_move
+
+    def evaluate_move(self, params):
+        move, board, depth, thread_pool = params
+        if self.last_move is not None and move == self.last_move.inverse():
+            return None
+        must_jump = board.must_jump
+        jumped_pieces, was_king = self.do_move(move, board)
+        child = self.evaluate_tree(move, board, depth + 1, thread_pool)
+        self.undo_move(move, jumped_pieces, must_jump, was_king, board)
+        return child
 
     def get_value_from_child(self, child):
         value, _ = child

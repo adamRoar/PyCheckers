@@ -1,4 +1,6 @@
 import sys
+import time
+
 import pygame
 from pygame.event import Event
 from pygame.surface import Surface
@@ -10,7 +12,8 @@ from model.model import Board, Color, Tile, MoveType
 
 class PyCheckers:
     def __init__(self):
-        pygame.init()
+        if not pygame.get_init():
+            pygame.init()
         self.settings = Settings()
         self.screen = pygame.display.set_mode((self.settings.screen_width,
                                                self.settings.screen_height))  # type: Surface
