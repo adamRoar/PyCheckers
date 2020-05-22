@@ -1,5 +1,8 @@
+import multiprocessing
 import sys
 import time
+import logging
+from concurrent.futures.process import ProcessPoolExecutor
 
 import pygame
 from pygame.event import Event
@@ -20,8 +23,9 @@ class PyCheckers:
         pygame.display.set_caption("PyCheckers")
         self.board = Board()
         self.selected_tile = None
-        self.red_ai = Ai(self.board, Color.RED, 4)
-        self.black_ai = Ai(self.board, Color.BLACK, 4)
+        self.executor = ProcessPoolExecutor()
+        self.red_ai = Ai(self.board, Color.RED, 6)
+        self.black_ai = Ai(self.board, Color.BLACK, 6)
         self.first = True
         self.num_AIs = 0
 
@@ -41,10 +45,12 @@ class PyCheckers:
                     elif event.key == pygame.K_2:
                         self.num_AIs = 0
             if self.num_AIs == 2:
-                self.black_ai.next_move()
+                self.black_ai.next_move(self.executor)
                 self.draw_board()
+                logging.warn(self.board)
                 pygame.display.flip()
-                self.red_ai.next_move()
+                self.red_ai.next_move(self.executor)
+                logging.warn(self.board)
             self.draw_board()
             pygame.display.flip()
 
@@ -98,6 +104,7 @@ class PyCheckers:
         text = font.render("{winner} wins!".format(winner=self.board.winner().name), True, color)
         self.screen.fill(self.settings.white_tile_color)
         self.screen.blit(text, (400 - text.get_width() // 2, 400 - text.get_height() // 2))
+        # self.executor.shutdown()
 
     def handle_click(self):
         (x, y) = pygame.mouse.get_pos()
