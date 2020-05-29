@@ -30,5 +30,5 @@ Checkers game in Python with Minimax AI
 ### Optimizations
 - [x] fix weird endgame behavior
 - [ ] alpha-beta pruning
-- [ ] multi-threading
+- [x] multi-threading
 - [ ] neural network
