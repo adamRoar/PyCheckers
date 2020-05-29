@@ -33,6 +33,7 @@ class PyCheckers:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.executor.shutdown()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.num_AIs != 2:
@@ -47,10 +48,8 @@ class PyCheckers:
             if self.num_AIs == 2:
                 self.black_ai.next_move(self.executor)
                 self.draw_board()
-                logging.warn(self.board)
                 pygame.display.flip()
                 self.red_ai.next_move(self.executor)
-                logging.warn(self.board)
             self.draw_board()
             pygame.display.flip()
 
@@ -92,8 +91,12 @@ class PyCheckers:
         color = self.settings.text_color
         player_text = font.render("{num_players} player".format(num_players=(2 - self.num_AIs)), True, color)
         instruction_text = small_font.render("0, 1, or 2 to change", True, color)
+        turn_text = small_font.render("{turn}'s turn".format(turn=self.board.turn.name), True, color)
+        counter_text = small_font.render("{turn_count} moves".format(turn_count=self.board.turn_counter), True, color)
         self.screen.blit(player_text, (5, 10))
         self.screen.blit(instruction_text, (5, 30))
+        self.screen.blit(turn_text, (5, 44))
+        self.screen.blit(counter_text, (5, 58))
 
     def draw_win_screen(self):
         if self.first:
@@ -130,7 +133,7 @@ class PyCheckers:
         if self.board.turn == Color.RED and self.num_AIs == 1:
             self.draw_board()
             pygame.display.flip()
-            self.red_ai.next_move()
+            self.red_ai.next_move(self.executor)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import unittest
+from concurrent.futures.process import ProcessPoolExecutor
 
 from ai.ai import Ai, Move
 from model.model import Board, Tile, Piece, Color
@@ -7,7 +8,7 @@ from model.model import Board, Tile, Piece, Color
 class MyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.b = Board()
-        self.ai = Ai(self.b, 1)
+        self.ai = Ai(self.b, Color.RED, 6)
 
     def test_get_available_moves_with_no_jumps(self):
         self.b.turn = Color.RED
@@ -76,11 +77,27 @@ class MyTestCase(unittest.TestCase):
         jumped_pieces, was_king = self.ai.do_move(move, self.b)
         self.ai.undo_move(move, jumped_pieces, must_jump, was_king, self.b)
         self.assertEqual(Color.RED, self.b.get_piece_at(Tile(2, 1)).color)
-        # piece was added to array of jumped pieces by do_move and readded to the board by undo_move
+        # piece was added to array of jumped pieces by do_move and re-added to the board by undo_move
         self.assertEqual(piece, self.b.get_piece_at(Tile(4, 3)))
         self.assertEqual(Color.BLACK, self.b.get_piece_at(Tile(5, 4)).color)
         self.assertIsNone(self.b.get_piece_at(Tile(1, 0)))
         self.assertIsNone(self.b.get_piece_at(Tile(3, 2)))
+
+    def test_sextuple_jump(self):
+        self.b = Board(True)
+        self.b.black_checkers = 6
+        self.b.set_piece_at(Tile(3, 0), Piece(Color.RED))
+        self.b.set_piece_at(Tile(4, 1), Piece(Color.BLACK))
+        self.b.set_piece_at(Tile(4, 3), Piece(Color.BLACK))
+        self.b.set_piece_at(Tile(4, 5), Piece(Color.BLACK))
+        self.b.set_piece_at(Tile(6, 1), Piece(Color.BLACK))
+        self.b.set_piece_at(Tile(6, 3), Piece(Color.BLACK))
+        self.b.set_piece_at(Tile(6, 5), Piece(Color.BLACK))
+        self.b.turn = Color.RED
+        self.assertEqual("[(3, 0), (5, 2), (7, 4), (5, 6), (3, 4), (5, 2), (7, 0)]",
+                         str(self.ai.get_available_moves(self.b)[1]))
+        jumped_pieces, _ = self.ai.do_move(self.ai.get_available_moves(self.b)[1], self.b)
+        self.assertEqual(6, len(jumped_pieces))
 
 
 if __name__ == '__main__':

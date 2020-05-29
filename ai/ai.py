@@ -1,9 +1,7 @@
 import copy
-import os
-import random
-import string
-import threading
-from concurrent.futures.process import ProcessPoolExecutor
+import logging
+import multiprocessing
+import pdb
 from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List, Optional
 
@@ -34,6 +32,8 @@ class Ai:
         self.depth = depth
         self.color = color
         self.last_move = None
+        logger = multiprocessing.log_to_stderr()
+        logger.setLevel(5)
 
     def next_move(self, executor):
         move = self.get_best_move(executor)
@@ -46,10 +46,13 @@ class Ai:
         for row in range(8):
             for col in range(8):
                 if (col + row) % 2 == 1:
-                    moves += self.get_moves(Tile(row, col), board)
+                    piece = board.get_piece_at(Tile(row, col))
+                    if piece is not None and piece.color == board.turn:
+                        moves += self.get_moves(Tile(row, col), board)
         return moves
 
-    def do_move(self, move: Move, board) -> (List[Piece], bool):
+    @staticmethod
+    def do_move(move: Move, board) -> (List[Piece], bool):
         start, *rest = move.path
         initial_turn = board.turn
         piece_at_start = board.get_piece_at(start)
@@ -128,8 +131,8 @@ class Ai:
                     piece.king()
                 board.set_piece_at(start, None)
                 board.set_piece_at(end, piece)
-                previous_moves.append(current_move)
-                extra_jumps = self.get_moves(end, board, only_jumps=True, previous_moves=previous_moves, counter=counter + 1)
+                extra_jumps = self.get_moves(end, board, only_jumps=True,
+                                             previous_moves=previous_moves + [current_move], counter=counter + 1)
                 piece.king() if was_king else piece.unking()
                 board.set_piece_at(start, piece)
                 board.set_piece_at(end, None)
